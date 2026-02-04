@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    /* File Layout */
+    "rootDir": "./src",          // where your .ts files live
+    "outDir": "./dist",          // compiled JS output
+
+    /* Environment Settings */
+    "module": "commonjs",        // Node.js module system
+    "target": "ES2020",          // modern JS features
+    "lib": ["ES2020"],           // standard library
+    "types": ["node"],           // include Node.js types
+
+    /* Other Outputs */
+    "sourceMap": true,           // useful for debugging
+    "declaration": false,        // you can set true if you want .d.ts files
+
+    /* Stricter Typechecking Options */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* Recommended Options */
+    "esModuleInterop": true,     // allow default imports from CommonJS
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"],            // compile everything inside src/
+  "exclude": ["node_modules"]    // ignore dependencies
+}
