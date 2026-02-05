@@ -4,8 +4,10 @@ import path from 'path';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './config/db';
+import { seedAll } from './config/seedData';
 import { swaggerSpec } from './config/swagger';
 import authRoutes from './routes/authRoutes';
+import categoryRoutes from './routes/categoryRoutes';
 
 // Load environment variables from project root .env (use cwd to be robust)
 const _envPath = path.resolve(process.cwd(), '.env');
@@ -30,6 +32,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -42,6 +45,9 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
+    
+    // Seed database with admin user
+    await seedAll();
     
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
