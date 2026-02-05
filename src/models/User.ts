@@ -9,9 +9,9 @@ export interface IUser extends Document {
   password: string;
   name: string;
   role: UserRole;
-  profilePicture?: string;
-  resetToken?: string;
-  resetTokenExpiry?: Date;
+  profilePicture?: string | undefined;
+  resetToken?: string | undefined;
+  resetTokenExpiry?: Date | undefined;
   createdAt: Date;
 }
 

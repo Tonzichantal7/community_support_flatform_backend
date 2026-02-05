@@ -12,5 +12,5 @@ export interface AuthRequest extends Request {
     email: string;
     role: UserRole;
   };
-  file?: Express.Multer.File;
+  file?: Express.Multer.File | undefined;
 }
