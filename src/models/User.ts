@@ -20,7 +20,7 @@ const userSchema = new Schema({
   email: { type: String, required: true, unique: true, index: true },
   password: { type: String, required: true },
   name: { type: String, required: true, index: true },
-  role: { type: String, enum: Object.values(UserRole), default: UserRole.CUSTOMER, index: true },
+  role: { type: String, enum: Object.values(UserRole), default: UserRole.USER, index: true },
   profilePicture: String,
   resetToken: String,
   resetTokenExpiry: Date,
