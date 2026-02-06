@@ -78,8 +78,8 @@ router.get('/:id', getCategoryById);
  *               isActive:
  *                 type: boolean
  *           example:
- *             name: Electronics
- *             description: Electronic products and gadgets
+ *             name: Housing
+ *             description: Community support category (e.g., housing, employment, education)
  *             isActive: true
  *     responses:
  *       201:
@@ -123,8 +123,8 @@ router.post('/', authenticate, requireAdmin, createCategory);
  *               isActive:
  *                 type: boolean
  *           example:
- *             name: Updated Electronics
- *             description: Updated description
+ *             name: Updated Housing
+ *             description: Updated community category description
  *             isActive: true
  *     responses:
  *       200:

@@ -18,7 +18,12 @@ const seedAdmin = async (): Promise<void> => {
     console.log('✅ Connected to MongoDB');
 
     // Check if admin already exists
-    const adminEmail = process.env.ADMIN_EMAIL || 'chantal@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) {
+      console.log('⚠️  ADMIN_EMAIL not set in .env, skipping admin creation');
+      await mongoose.disconnect();
+      return;
+    }
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (existingAdmin) {
@@ -28,7 +33,12 @@ const seedAdmin = async (): Promise<void> => {
     }
 
     // Create admin user
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@1234';
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword) {
+      console.log('⚠️  ADMIN_PASSWORD not set in .env, skipping admin creation');
+      await mongoose.disconnect();
+      return;
+    }
     const adminUser = new User({
       email: adminEmail,
       password: adminPassword,

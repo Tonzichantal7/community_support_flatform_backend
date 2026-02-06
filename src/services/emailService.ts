@@ -1,21 +1,7 @@
 import nodemailer from 'nodemailer';
+import { mailTransporter } from '../config/mailConfig';
 
-
-console.log('SMTP_HOST:', process.env.SMTP_HOST);
-console.log('SMTP_PORT:', process.env.SMTP_PORT);
-console.log('EMAIL_USER:', process.env.EMAIL_USER);
-console.log('EMAIL_PASSWORD set?', process.env.EMAIL_PASSWORD ? '✅' : '❌');
-
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,        // smtp.gmail.com
-  port: Number(process.env.SMTP_PORT), // 587
-  secure: false,                        // STARTTLS
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,  // 16-char App Password
-  },
-});
+const transporter = mailTransporter;
 
 // Send email function
 const isValidEmail = (email: string): boolean => {
@@ -31,15 +17,16 @@ export const sendEmail = async (to: string, subject: string, html: string): Prom
   }
 
   try {
+    const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'no-reply@example.com';
     const mailOptions = {
-      from: `"E-Shop" <${process.env.EMAIL_USER}>`,
+      from: `"Community Support" <${fromAddress}>`,
       to,
       subject,
-      html
+      html,
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`[Email sent] To: ${to}, Subject: ${subject}, MessageId: ${info.messageId}`);
+    const info = await transporter.sendMail(mailOptions as any);
+    console.log(`[Email sent] To: ${to}, Subject: ${subject}, MessageId: ${info?.messageId || 'n/a'}`);
   } catch (error: any) {
     console.error(`[Email failed] To: ${to}, Subject: ${subject}`);
     console.error('Error details:', error.message);
@@ -63,42 +50,42 @@ export const sendEmail = async (to: string, subject: string, html: string): Prom
 
 // Specific email functions
 export const sendWelcomeEmail = async (email: string, name: string): Promise<void> => {
-  const subject = 'Welcome to E-Shop - Registration Successful!';
+  const subject = 'Welcome to Community Support Platform - Registration Successful!';
   const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #007bff; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; background: #f9f9f9; }
-            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Welcome to E-Shop!</h1>
-            </div>
-            <div class="content">
-                <h2>Hello ${name}!</h2>
-                <p>Thank you for registering with E-Shop. Your account has been created successfully.</p>
-                <p>You can now:</p>
-                <ul>
-                    <li>Browse our extensive product catalog</li>
-                    <li>Add items to your cart</li>
-                    <li>Place orders securely</li>
-                    <li>Track your order status</li>
-                </ul>
-                <p>Start shopping now and discover amazing deals!</p>
-            </div>
-            <div class="footer">
-                <p>Thank you for choosing E-Shop!</p>
-            </div>
-        </div>
-    </body>
-    </html>
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: #007bff; color: white; padding: 20px; text-align: center; }
+      .content { padding: 20px; background: #f9f9f9; }
+      .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Welcome to Community Support Platform!</h1>
+      </div>
+      <div class="content">
+        <h2>Hello ${name}!</h2>
+        <p>Thank you for registering with the Community Support Platform. Your account has been created successfully.</p>
+        <p>You can now:</p>
+        <ul>
+          <li>Post requests for help</li>
+          <li>Respond to community requests</li>
+          <li>Follow categories of interest</li>
+          <li>Manage your profile and notifications</li>
+        </ul>
+        <p>Get involved and help your community!</p>
+      </div>
+      <div class="footer">
+        <p>Thank you for joining the Community Support Platform!</p>
+      </div>
+    </div>
+  </body>
+  </html>
   `;
   await sendEmail(email, subject, html);
 };

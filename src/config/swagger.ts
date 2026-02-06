@@ -4,12 +4,12 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'E-Commerce API',
+      title: 'Community Support Platform API',
       version: '1.0.0',
-      description: 'REST API with authentication, RBAC, and CRUD operations for Categories, Products, and Cart',
+      description: 'API documentation for the Community Support Platform backend: authentication, categories, requests, responses, and abuse reporting.',
       contact: {
-        name: 'Chantal Uwitonze',
-        url: 'https://github.com/Tonzichantal7/Ecommerce-deployed-version',
+        name: 'Community Support Platform',
+        url: 'https://github.com/Tonzichantal7/community_support_flatform_backend',
       },
     },
     servers: [
@@ -18,7 +18,7 @@ const options: swaggerJsdoc.Options = {
         description: 'Development server',
       },
       {
-        url: 'https://ecommerce-deployed-version.onrender.com',
+        url: '',
         description: 'Production server',
       },
     ],
@@ -49,69 +49,38 @@ const options: swaggerJsdoc.Options = {
             description: { type: 'string' },
           },
         },
-        Product: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', format: 'uuid' },
-            name: { type: 'string' },
-            price: { type: 'number', minimum: 0 },
-            description: { type: 'string' },
-            categoryId: { type: 'string', format: 'uuid' },
-            inStock: { type: 'boolean' },
-            quantity: { type: 'number', minimum: 0 },
-            vendorId: { type: 'string', format: 'uuid' },
-          },
-        },
-        CartItem: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', format: 'uuid' },
-            productId: { type: 'string', format: 'uuid' },
-            quantity: { type: 'number', minimum: 1 },
-            price: { type: 'number' },
-          },
-        },
-        Cart: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', format: 'uuid' },
-            userId: { type: 'string', format: 'uuid' },
-            items: { type: 'array', items: { $ref: '#/components/schemas/CartItem' } },
-            updatedAt: { type: 'string', format: 'date-time' },
-          },
-        },
+        
         Error: {
           type: 'object',
           properties: {
             error: { type: 'string' },
           },
         },
-        Order: {
+        
+        ModerationAction: {
+          type: 'object',
+          properties: {
+            adminId: { type: 'string' },
+            action: { type: 'string', enum: ['REMOVE', 'RESTORE', 'DISMISS', 'WARN', 'NO_ACTION'] },
+            reason: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' }
+          }
+        },
+        AbuseReport: {
           type: 'object',
           properties: {
             id: { type: 'string', format: 'uuid' },
-            userId: { type: 'string', format: 'uuid' },
-            items: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', format: 'uuid' },
-                  productId: { type: 'string', format: 'uuid' },
-                  name: { type: 'string' },
-                  price: { type: 'number' },
-                  quantity: { type: 'number', minimum: 1 }
-                }
-              }
-            },
-            totalAmount: { type: 'number', minimum: 0 },
-            status: { 
-              type: 'string', 
-              enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'] 
-            },
+            reporterId: { type: 'string' },
+            targetType: { type: 'string', enum: ['REQUEST', 'RESPONSE', 'USER', 'OTHER'] },
+            targetId: { type: 'string' },
+            reason: { type: 'string' },
+            details: { type: 'string' },
+            status: { type: 'string', enum: ['OPEN', 'UNDER_REVIEW', 'ACTION_TAKEN', 'DISMISSED'] },
+            isActive: { type: 'boolean' },
+            actions: { type: 'array', items: { $ref: '#/components/schemas/ModerationAction' } },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
-          },
+          }
         },
       },
     },

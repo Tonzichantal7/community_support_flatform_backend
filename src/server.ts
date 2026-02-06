@@ -10,6 +10,8 @@ import authRoutes from './routes/authRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import requestRoutes from './routes/requestRoutes';
 import responseRoutes from './routes/responseRoutes';
+import abuseRoutes from './routes/abuseRoutes';
+
 
 // env already loaded by import './config/env'
 
@@ -34,6 +36,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/responses', responseRoutes);
+app.use('/api/abuse', abuseRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
