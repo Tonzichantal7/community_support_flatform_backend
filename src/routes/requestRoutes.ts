@@ -13,6 +13,9 @@ import {
   getPendingRequests,
   getApprovedRequests,
   getRejectedRequests,
+  viewRequest,
+  likeRequest,
+  unlikeRequest,
 } from '../controller/requestController';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/adminAuth';
@@ -451,5 +454,100 @@ router.patch('/approve', authenticate, requireAdmin, approveRequest);
  *         description: Request not found
  */
 router.patch('/reject', authenticate, requireAdmin, rejectRequest);
+
+/**
+ * @swagger
+ * /api/requests/view:
+ *   post:
+ *     summary: Record a view for a request
+ *     description: Increment view counter for a request
+ *     tags: [Requests]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - requestId
+ *             properties:
+ *               requestId:
+ *                 type: string
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *     responses:
+ *       200:
+ *         description: View recorded successfully
+ *       400:
+ *         description: Missing request ID
+ *       404:
+ *         description: Request not found
+ */
+router.post('/view', viewRequest);
+
+/**
+ * @swagger
+ * /api/requests/like:
+ *   post:
+ *     summary: Like a request
+ *     description: Add a like to a request (authenticated users only)
+ *     tags: [Requests]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - requestId
+ *             properties:
+ *               requestId:
+ *                 type: string
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *     responses:
+ *       200:
+ *         description: Request liked successfully
+ *       400:
+ *         description: Already liked or invalid request ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Request not found
+ */
+router.post('/like', authenticate, likeRequest);
+
+/**
+ * @swagger
+ * /api/requests/unlike:
+ *   post:
+ *     summary: Unlike a request
+ *     description: Remove a like from a request (authenticated users only)
+ *     tags: [Requests]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - requestId
+ *             properties:
+ *               requestId:
+ *                 type: string
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *     responses:
+ *       200:
+ *         description: Like removed successfully
+ *       400:
+ *         description: Not liked yet or invalid request ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Request not found
+ */
+router.post('/unlike', authenticate, unlikeRequest);
 
 export default router;

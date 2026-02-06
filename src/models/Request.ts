@@ -14,6 +14,9 @@ export interface IRequest extends Document {
   canOfferService: boolean; // Whether user can offer service on this request (only if approved)
   approvedBy?: string;     // Admin ID who approved the request
   approvedAt?: Date;       // Timestamp when request was approved
+  views: number;           // Number of views
+  likes: number;           // Number of likes
+  likedBy: string[];       // Array of user IDs who liked this request
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -33,6 +36,9 @@ const requestSchema = new Schema<IRequest>(
     canOfferService: { type: Boolean, default: false, index: true },
     approvedBy: { type: String, default: null },
     approvedAt: { type: Date, default: null },
+    views: { type: Number, default: 0, index: true },
+    likes: { type: Number, default: 0, index: true },
+    likedBy: { type: [String], default: [] },
     isActive: { type: Boolean, default: true, index: true },
   },
   { timestamps: true, collection: 'requests' }

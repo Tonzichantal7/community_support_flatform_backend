@@ -7,6 +7,9 @@ export interface IResponse extends Document {
   userId: string;        // Reference to User who responded
   content: string;       // Response message
   status: 'VISIBLE' | 'HIDDEN';  // Visibility status
+  views: number;         // Number of views
+  likes: number;         // Number of likes
+  likedBy: string[];     // Array of user IDs who liked this response
   isActive: boolean;     // Soft delete flag
   createdAt: Date;
   updatedAt: Date;
@@ -19,6 +22,9 @@ const responseSchema = new Schema<IResponse>(
     userId: { type: String, required: true, index: true },
     content: { type: String, required: true },
     status: { type: String, enum: ['VISIBLE', 'HIDDEN'], default: 'VISIBLE', index: true },
+    views: { type: Number, default: 0, index: true },
+    likes: { type: Number, default: 0, index: true },
+    likedBy: { type: [String], default: [] },
     isActive: { type: Boolean, default: true, index: true },
   },
   { timestamps: true, collection: 'responses' }

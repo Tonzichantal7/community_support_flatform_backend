@@ -167,3 +167,251 @@ export const sendOrderStatusUpdateEmail = async (email: string, orderId: string,
   `;
   await sendEmail(email, subject, html);
 };
+// Community Service Platform Notifications
+
+export const sendRequestCreatedEmail = async (email: string, userName: string, requestTitle: string, requestType: string): Promise<void> => {
+  const subject = `Your ${requestType} has been posted successfully`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #28a745; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+            .content { padding: 20px; background: #f9f9f9; margin-top: 10px; border-radius: 5px; }
+            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🎉 ${requestType} Posted Successfully</h1>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p>Your ${requestType.toLowerCase()} has been posted to our community platform.</p>
+                <p><strong>Title:</strong> ${requestTitle}</p>
+                <p>Your post is now visible to the community. Wait for responses and engagement from other users.</p>
+                <p>Thank you for contributing to our community!</p>
+            </div>
+            <div class="footer">
+                <p>Community Support Platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+  await sendEmail(email, subject, html);
+};
+
+export const sendRequestApprovedEmail = async (email: string, userName: string, requestTitle: string): Promise<void> => {
+  const subject = 'Your Request Has Been Approved!';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #007bff; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+            .content { padding: 20px; background: #f0f8ff; margin-top: 10px; border-radius: 5px; }
+            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>✅ Request Approved!</h1>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p>Great news! Your request has been approved by our admin team.</p>
+                <p><strong>Request Title:</strong> ${requestTitle}</p>
+                <p>Users can now offer services on your request. You will be notified when someone responds to your request.</p>
+            </div>
+            <div class="footer">
+                <p>Community Support Platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+  await sendEmail(email, subject, html);
+};
+
+export const sendRequestRejectedEmail = async (email: string, userName: string, requestTitle: string, reason?: string): Promise<void> => {
+  const subject = 'Your Request Has Been Rejected';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc3545; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+            .content { padding: 20px; background: #fff5f5; margin-top: 10px; border-radius: 5px; }
+            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>⚠️ Request Rejected</h1>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p>Unfortunately, your request could not be approved.</p>
+                <p><strong>Request Title:</strong> ${requestTitle}</p>
+                ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+                <p>You can create a new request with revised details. Please refer to our community guidelines.</p>
+            </div>
+            <div class="footer">
+                <p>Community Support Platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+  await sendEmail(email, subject, html);
+};
+
+export const sendServiceOfferEmail = async (email: string, userName: string, requestTitle: string, offererName: string): Promise<void> => {
+  const subject = 'Someone Has Offered to Help!';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #ffc107; color: #333; padding: 20px; text-align: center; border-radius: 5px; }
+            .content { padding: 20px; background: #fffbf0; margin-top: 10px; border-radius: 5px; }
+            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🤝 New Service Offer!</h1>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p><strong>${offererName}</strong> has offered to help with your request!</p>
+                <p><strong>Request Title:</strong> ${requestTitle}</p>
+                <p>Log in to your account to view their offer and get in touch with them.</p>
+            </div>
+            <div class="footer">
+                <p>Community Support Platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+  await sendEmail(email, subject, html);
+};
+
+export const sendResponsePostedEmail = async (email: string, userName: string, requestTitle: string, responderName: string): Promise<void> => {
+  const subject = 'New Response to Your Request';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #17a2b8; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+            .content { padding: 20px; background: #f0f8ff; margin-top: 10px; border-radius: 5px; }
+            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>💬 New Response</h1>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p><strong>${responderName}</strong> has posted a response to your request!</p>
+                <p><strong>Request Title:</strong> ${requestTitle}</p>
+                <p>Check the details and start a conversation with the responder.</p>
+            </div>
+            <div class="footer">
+                <p>Community Support Platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+  await sendEmail(email, subject, html);
+};
+
+export const sendRequestLikedEmail = async (email: string, userName: string, requestTitle: string, liker: string): Promise<void> => {
+  const subject = 'Your Request Has Been Liked!';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #e83e8c; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+            .content { padding: 20px; background: #fff5fa; margin-top: 10px; border-radius: 5px; }
+            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>❤️ Your Request Was Liked!</h1>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p><strong>${liker}</strong> liked your request!</p>
+                <p><strong>Request Title:</strong> ${requestTitle}</p>
+                <p>Your content is getting positive engagement. Keep up the great work!</p>
+            </div>
+            <div class="footer">
+                <p>Community Support Platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+  await sendEmail(email, subject, html);
+};
+
+export const sendResponseLikedEmail = async (email: string, userName: string, requestTitle: string, liker: string): Promise<void> => {
+  const subject = 'Your Response Was Liked!';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #e83e8c; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+            .content { padding: 20px; background: #fff5fa; margin-top: 10px; border-radius: 5px; }
+            .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>❤️ Your Response Was Liked!</h1>
+            </div>
+            <div class="content">
+                <h2>Hello ${userName}!</h2>
+                <p><strong>${liker}</strong> liked your response!</p>
+                <p><strong>Request Title:</strong> ${requestTitle}</p>
+                <p>Keep sharing helpful responses in our community!</p>
+            </div>
+            <div class="footer">
+                <p>Community Support Platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+  await sendEmail(email, subject, html);
+};

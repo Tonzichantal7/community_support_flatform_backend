@@ -9,6 +9,9 @@ import {
   hideResponse,
   showResponse,
   getResponsesByUser,
+  viewResponse,
+  likeResponse,
+  unlikeResponse,
 } from '../controller/responseController';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/adminAuth';
@@ -264,5 +267,100 @@ router.patch('/:id/show', authenticate, requireAdmin, showResponse);
  *         description: Unauthorized
  */
 router.get('/my-responses', authenticate, getResponsesByUser);
+
+/**
+ * @swagger
+ * /api/responses/view:
+ *   post:
+ *     summary: Record a view for a response
+ *     description: Increment view counter for a response
+ *     tags: [Responses]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - responseId
+ *             properties:
+ *               responseId:
+ *                 type: string
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *     responses:
+ *       200:
+ *         description: View recorded successfully
+ *       400:
+ *         description: Missing response ID
+ *       404:
+ *         description: Response not found
+ */
+router.post('/view', viewResponse);
+
+/**
+ * @swagger
+ * /api/responses/like:
+ *   post:
+ *     summary: Like a response
+ *     description: Add a like to a response (authenticated users only)
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - responseId
+ *             properties:
+ *               responseId:
+ *                 type: string
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *     responses:
+ *       200:
+ *         description: Response liked successfully
+ *       400:
+ *         description: Already liked or invalid response ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Response not found
+ */
+router.post('/like', authenticate, likeResponse);
+
+/**
+ * @swagger
+ * /api/responses/unlike:
+ *   post:
+ *     summary: Unlike a response
+ *     description: Remove a like from a response (authenticated users only)
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - responseId
+ *             properties:
+ *               responseId:
+ *                 type: string
+ *                 example: "550e8400-e29b-41d4-a716-446655440000"
+ *     responses:
+ *       200:
+ *         description: Like removed successfully
+ *       400:
+ *         description: Not liked yet or invalid response ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Response not found
+ */
+router.post('/unlike', authenticate, unlikeResponse);
 
 export default router;

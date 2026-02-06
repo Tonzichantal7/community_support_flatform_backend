@@ -1,7 +1,13 @@
 import { Request, Response } from 'express';
 import ResponseModel, { IResponse } from '../models/Response';
 import RequestModel from '../models/Request';
+import User from '../models/User';
 import { AuthRequest } from '../types';
+import {
+  sendResponsePostedEmail,
+  sendResponseLikedEmail,
+  sendRequestLikedEmail,
+} from '../services/emailService';
 
 // Create a new response to a request
 export const createResponse = async (req: AuthRequest, res: Response) => {
@@ -34,6 +40,17 @@ export const createResponse = async (req: AuthRequest, res: Response) => {
     });
 
     await newResponse.save();
+
+    // Send email notification to request owner
+    try {
+      const responder = await User.findOne({ id: userId } as Record<string, any>).select('name').lean();
+      const requestOwner = await User.findOne({ id: request.userId } as Record<string, any>).select('email name').lean();
+      if (requestOwner?.email) {
+        await sendResponsePostedEmail(requestOwner.email, requestOwner.name || 'User', request.title, responder?.name || 'Someone');
+      }
+    } catch (emailError) {
+      console.error('Error sending response notification email:', emailError);
+    }
 
     res.status(201).json({
       message: 'Response created successfully',
@@ -294,5 +311,127 @@ export const getResponsesByUser = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error fetching user responses:', error);
     res.status(500).json({ error: 'Failed to fetch user responses' });
+  }
+};
+
+// Record a view for a response
+export const viewResponse = async (req: AuthRequest, res: Response) => {
+  try {
+    const { responseId } = req.body;
+
+    if (!responseId || typeof responseId !== 'string') {
+      return res.status(400).json({ error: 'Response ID is required and must be a string' });
+    }
+
+    // Find response and increment views
+    const response = await ResponseModel.findOneAndUpdate(
+      { id: responseId, isActive: true },
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+
+    if (!response) {
+      return res.status(404).json({ error: 'Response not found' });
+    }
+
+    res.status(200).json({
+      message: 'View recorded successfully',
+      views: response.views,
+    });
+  } catch (error) {
+    console.error('View response error:', error);
+    res.status(500).json({ error: 'Failed to record view' });
+  }
+};
+
+// Like a response (authenticated users only)
+export const likeResponse = async (req: AuthRequest, res: Response) => {
+  try {
+    const { responseId } = req.body;
+    const userId = req.user?.id;
+
+    if (!responseId || typeof responseId !== 'string') {
+      return res.status(400).json({ error: 'Response ID is required and must be a string' });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Find response
+    const response = await ResponseModel.findOne({ id: responseId, isActive: true } as Record<string, any>);
+    if (!response) {
+      return res.status(404).json({ error: 'Response not found' });
+    }
+
+    // Check if user already liked
+    if (response.likedBy.includes(userId)) {
+      return res.status(400).json({ error: 'You already liked this response' });
+    }
+
+    // Add like
+    response.likedBy.push(userId);
+    response.likes = response.likedBy.length;
+    await response.save();
+
+    // Send email notification to response owner
+    try {
+      const request = await RequestModel.findOne({ id: response.requestId }).select('title').lean();
+      const liker = await User.findOne({ id: userId } as Record<string, any>).select('name').lean();
+      const responseOwner = await User.findOne({ id: response.userId } as Record<string, any>).select('email name').lean();
+      if (responseOwner?.email && response.userId !== userId) {
+        await sendResponseLikedEmail(responseOwner.email, responseOwner.name || 'User', request?.title || 'Request', liker?.name || 'Someone');
+      }
+    } catch (emailError) {
+      console.error('Error sending response like email:', emailError);
+    }
+
+    res.status(200).json({
+      message: 'Response liked successfully',
+      likes: response.likes,
+    });
+  } catch (error) {
+    console.error('Like response error:', error);
+    res.status(500).json({ error: 'Failed to like response' });
+  }
+};
+
+// Unlike a response (authenticated users only)
+export const unlikeResponse = async (req: AuthRequest, res: Response) => {
+  try {
+    const { responseId } = req.body;
+    const userId = req.user?.id;
+
+    if (!responseId || typeof responseId !== 'string') {
+      return res.status(400).json({ error: 'Response ID is required and must be a string' });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Find response
+    const response = await ResponseModel.findOne({ id: responseId, isActive: true } as Record<string, any>);
+    if (!response) {
+      return res.status(404).json({ error: 'Response not found' });
+    }
+
+    // Check if user liked
+    if (!response.likedBy.includes(userId)) {
+      return res.status(400).json({ error: 'You have not liked this response' });
+    }
+
+    // Remove like
+    response.likedBy = response.likedBy.filter((id) => id !== userId);
+    response.likes = response.likedBy.length;
+    await response.save();
+
+    res.status(200).json({
+      message: 'Like removed successfully',
+      likes: response.likes,
+    });
+  } catch (error) {
+    console.error('Unlike response error:', error);
+    res.status(500).json({ error: 'Failed to remove like' });
   }
 };

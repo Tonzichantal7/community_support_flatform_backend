@@ -2,6 +2,14 @@ import { Response } from 'express';
 import { AuthRequest } from '../types';
 import Request from '../models/Request';
 import Category from '../models/Category';
+import User from '../models/User';
+import {
+  sendRequestCreatedEmail,
+  sendRequestApprovedEmail,
+  sendRequestRejectedEmail,
+  sendServiceOfferEmail,
+  sendRequestLikedEmail,
+} from '../services/emailService';
 
 /**
  * Get all pending requests available for admin approval
@@ -199,6 +207,17 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
     });
 
     await newRequest.save();
+
+    // Send email notification to user
+    try {
+      const user = await User.findOne({ id: userId } as Record<string, any>).select('email name').lean();
+      if (user?.email) {
+        await sendRequestCreatedEmail(user.email, user.name || 'User', title, type);
+      }
+    } catch (emailError) {
+      console.error('Error sending request creation email:', emailError);
+      // Don't fail the request creation if email fails
+    }
 
     res.status(201).json({
       message: 'Request created successfully',
@@ -470,6 +489,17 @@ export const offerService = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
+    // Send email notification to request creator
+    try {
+      const requestOwner = await User.findOne({ id: request.userId } as Record<string, any>).select('email name').lean();
+      const offerer = await User.findOne({ id: userId } as Record<string, any>).select('name').lean();
+      if (requestOwner?.email) {
+        await sendServiceOfferEmail(requestOwner.email, requestOwner.name || 'User', request.title, offerer?.name || 'Someone');
+      }
+    } catch (emailError) {
+      console.error('Error sending service offer email:', emailError);
+    }
+
     res.status(200).json({
       message: 'Service offer recorded successfully',
       request: {
@@ -573,6 +603,13 @@ export const approveRequest = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    // Find request first to get user details for email
+    const originalRequest = await Request.findOne({ id: requestId, isActive: true });
+    if (!originalRequest) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
     // Find and update request
     const request = await Request.findOneAndUpdate(
       { id: requestId, isActive: true },
@@ -589,6 +626,16 @@ export const approveRequest = async (req: AuthRequest, res: Response): Promise<v
     if (!request) {
       res.status(404).json({ error: 'Request not found' });
       return;
+    }
+
+    // Send approval email to user
+    try {
+      const user = await User.findOne({ id: originalRequest.userId } as Record<string, any>).select('email name').lean();
+      if (user?.email) {
+        await sendRequestApprovedEmail(user.email, user.name || 'User', originalRequest.title);
+      }
+    } catch (emailError) {
+      console.error('Error sending approval email:', emailError);
     }
 
     res.status(200).json({
@@ -622,6 +669,13 @@ export const rejectRequest = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    // Find request first to get user details for email
+    const originalRequest = await Request.findOne({ id: requestId, isActive: true });
+    if (!originalRequest) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
     // Find and update request
     const request = await Request.findOneAndUpdate(
       { id: requestId, isActive: true },
@@ -638,6 +692,16 @@ export const rejectRequest = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    // Send rejection email to user
+    try {
+      const user = await User.findOne({ id: originalRequest.userId } as Record<string, any>).select('email name').lean();
+      if (user?.email) {
+        await sendRequestRejectedEmail(user.email, user.name || 'User', originalRequest.title, reason);
+      }
+    } catch (emailError) {
+      console.error('Error sending rejection email:', emailError);
+    }
+
     res.status(200).json({
       message: 'Request rejected successfully. User cannot offer services on this request.',
       request,
@@ -645,5 +709,141 @@ export const rejectRequest = async (req: AuthRequest, res: Response): Promise<vo
   } catch (error) {
     console.error('Reject request error:', error);
     res.status(500).json({ error: 'Failed to reject request' });
+  }
+};
+/**
+ * Record a view for a request
+ */
+export const viewRequest = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { requestId } = req.body;
+
+    if (!requestId || typeof requestId !== 'string') {
+      res.status(400).json({ error: 'Request ID is required and must be a string' });
+      return;
+    }
+
+    // Find request and increment views
+    const request = await Request.findOneAndUpdate(
+      { id: requestId, isActive: true },
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+
+    if (!request) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
+    res.status(200).json({
+      message: 'View recorded successfully',
+      views: request.views,
+    });
+  } catch (error) {
+    console.error('View request error:', error);
+    res.status(500).json({ error: 'Failed to record view' });
+  }
+};
+
+/**
+ * Like a request (authenticated users only)
+ */
+export const likeRequest = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { requestId } = req.body;
+    const userId = req.user?.id;
+
+    if (!requestId || typeof requestId !== 'string') {
+      res.status(400).json({ error: 'Request ID is required and must be a string' });
+      return;
+    }
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Find request
+    const request = await Request.findOne({ id: requestId, isActive: true } as Record<string, any>);
+    if (!request) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
+    // Check if user already liked
+    if (request.likedBy.includes(userId)) {
+      res.status(400).json({ error: 'You already liked this request' });
+      return;
+    }
+
+    // Add like
+    request.likedBy.push(userId);
+    request.likes = request.likedBy.length;
+    await request.save();
+
+    // Send email notification to request owner
+    try {
+      const liker = await User.findOne({ id: userId } as Record<string, any>).select('name').lean();
+      const requestOwner = await User.findOne({ id: request.userId } as Record<string, any>).select('email name').lean();
+      if (requestOwner?.email && request.userId !== userId) {
+        await sendRequestLikedEmail(requestOwner.email, requestOwner.name || 'User', request.title, liker?.name || 'Someone');
+      }
+    } catch (emailError) {
+      console.error('Error sending like email:', emailError);
+    }
+
+    res.status(200).json({
+      message: 'Request liked successfully',
+      likes: request.likes,
+    });
+  } catch (error) {
+    console.error('Like request error:', error);
+    res.status(500).json({ error: 'Failed to like request' });
+  }
+};
+
+/**
+ * Unlike a request (authenticated users only)
+ */
+export const unlikeRequest = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { requestId } = req.body;
+    const userId = req.user?.id;
+
+    if (!requestId || typeof requestId !== 'string') {
+      res.status(400).json({ error: 'Request ID is required and must be a string' });
+      return;
+    }
+
+    if (!userId) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    // Find request
+    const request = await Request.findOne({ id: requestId, isActive: true } as Record<string, any>);
+    if (!request) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
+    // Check if user liked
+    if (!request.likedBy.includes(userId)) {
+      res.status(400).json({ error: 'You have not liked this request' });
+      return;
+    }
+
+    // Remove like
+    request.likedBy = request.likedBy.filter((id) => id !== userId);
+    request.likes = request.likedBy.length;
+    await request.save();
+
+    res.status(200).json({
+      message: 'Like removed successfully',
+      likes: request.likes,
+    });
+  } catch (error) {
+    console.error('Unlike request error:', error);
+    res.status(500).json({ error: 'Failed to remove like' });
   }
 };

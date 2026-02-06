@@ -5,6 +5,7 @@ import { mailTransporter } from '../config/mailConfig';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { sendWelcomeEmail, sendEmailLoginNotification } from '../services/emailService';
 
 export const register = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -23,6 +24,14 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 
     const user = new User({ email, password, name });
     await user.save();
+
+    // Send welcome email
+    try {
+      await sendWelcomeEmail(email, name);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't block registration if email fails
+    }
 
     // create JWT token for the new user
     const secret = process.env.JWT_SECRET || 'your-secret-key';
@@ -66,6 +75,14 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       secret as unknown as jwt.Secret,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
     );
+
+    // Send login notification email
+    try {
+      await sendEmailLoginNotification(email, user.name);
+    } catch (emailError) {
+      console.error('Failed to send login notification email:', emailError);
+      // Don't block login if email fails
+    }
 
     res.status(200).json({ message: 'Login successful', token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
@@ -155,7 +172,6 @@ export const resetPassword = async (req: AuthRequest, res: Response): Promise<vo
     res.status(500).json({ error: 'Failed to reset password' });
   }
 };
-
 export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { oldPassword, newPassword } = req.body;
