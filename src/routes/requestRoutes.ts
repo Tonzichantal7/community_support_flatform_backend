@@ -431,11 +431,6 @@ router.patch('/approve', authenticate, requireAdmin, approveRequest);
  *             type: object
  *             required:
  *               - requestId
- *               - requestName
- *             properties:
- *               requestId:
- *                 type: string
- *                 description: ID of the request to reject
  *             properties:
  *               requestId:
  *                 type: string
@@ -444,7 +439,11 @@ router.patch('/approve', authenticate, requireAdmin, approveRequest);
  *                 type: string
  *                 description: Optional reason for rejection
  *           example:
- *             requestId: "request_uuid_here
+ *             requestId: "request_uuid_here"
+ *     responses:
+ *       200:
+ *         description: Request rejected successfully
+ *       400:
  *         description: Bad request - missing or invalid requestId
  *       401:
  *         description: Unauthorized

@@ -1,7 +1,7 @@
+import './config/env';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './config/db';
 import { seedAll } from './config/seedData';
@@ -11,10 +11,7 @@ import categoryRoutes from './routes/categoryRoutes';
 import requestRoutes from './routes/requestRoutes';
 import responseRoutes from './routes/responseRoutes';
 
-// Load environment variables from project root .env (use cwd to be robust)
-const _envPath = path.resolve(process.cwd(), '.env');
-const _dotenvResult = dotenv.config({ path: _envPath });
-console.log(`[dotenv] loaded ${Object.keys(_dotenvResult.parsed || {}).length} vars from ${_envPath}`);
+// env already loaded by import './config/env'
 
 const app = express();
 const PORT = process.env.PORT || 8080;
