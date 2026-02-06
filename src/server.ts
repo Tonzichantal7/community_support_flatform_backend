@@ -8,6 +8,8 @@ import { seedAll } from './config/seedData';
 import { swaggerSpec } from './config/swagger';
 import authRoutes from './routes/authRoutes';
 import categoryRoutes from './routes/categoryRoutes';
+import requestRoutes from './routes/requestRoutes';
+import responseRoutes from './routes/responseRoutes';
 
 // Load environment variables from project root .env (use cwd to be robust)
 const _envPath = path.resolve(process.cwd(), '.env');
@@ -33,6 +35,8 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/requests', requestRoutes);
+app.use('/api/responses', responseRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
