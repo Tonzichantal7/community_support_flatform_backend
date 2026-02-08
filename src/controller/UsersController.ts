@@ -35,7 +35,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
       email,
       password,
       name,
-      role: UserRole.CUSTOMER
+      role: UserRole.USER
     });
 
     console.log('User created successfully:', user.id);

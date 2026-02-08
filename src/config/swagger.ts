@@ -4,21 +4,12 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-<<<<<<< Updated upstream
       title: 'Community Support Platform API',
       version: '1.0.0',
       description: 'API documentation for the Community Support Platform backend: authentication, categories, requests, responses, and abuse reporting.',
       contact: {
         name: 'Community Support Platform',
         url: 'https://github.com/Tonzichantal7/community_support_flatform_backend',
-=======
-      title: 'community-support-platform-backend API',
-      version: '1.0.0',
-      description: 'community-support-platform-backend API documentation',
-      contact: {
-        name: 'Chantal Uwitonze - orivier Nduwayesu ',
-        url: 'https://github.com/Tonzichantal7/Ecommerce-deployed-version',
->>>>>>> Stashed changes
       },
     },
     servers: [
@@ -58,14 +49,14 @@ const options: swaggerJsdoc.Options = {
             description: { type: 'string' },
           },
         },
-        
+
         Error: {
           type: 'object',
           properties: {
             error: { type: 'string' },
           },
         },
-        
+
         ModerationAction: {
           type: 'object',
           properties: {

@@ -20,6 +20,11 @@ export const mailTransporter = emailEnabled
         user: smtpUser,
         pass: smtpPass,
       },
+      tls: {
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1'
+      },
+      requireTLS: false
     })
   : nodemailer.createTransport({ jsonTransport: true });
 

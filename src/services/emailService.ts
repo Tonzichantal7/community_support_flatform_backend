@@ -1,7 +1,15 @@
 import nodemailer from 'nodemailer';
 import { mailTransporter } from '../config/mailConfig';
+import {
+  welcomeEmailTemplate,
+  newResponseEmailTemplate,
+  requestFlaggedEmailTemplate,
+  adminAbuseReportEmailTemplate,
+} from '../templates/emailTemplates';
+import User from '../models/User';
 
 const transporter = mailTransporter;
+const FROM_EMAIL = process.env.EMAIL_USER || 'noreply@communityplatform.com';
 
 // Send email function
 const isValidEmail = (email: string): boolean => {
@@ -401,4 +409,129 @@ export const sendResponseLikedEmail = async (email: string, userName: string, re
     </html>
   `;
   await sendEmail(email, subject, html);
+};
+
+/**
+ * Send notification when someone responds to a request
+ */
+export const sendNewResponseNotification = async (
+  requestOwnerId: string,
+  requestTitle: string,
+  responderName: string,
+  responseContent: string,
+  requestId: string
+): Promise<void> => {
+  try {
+    const requestOwner = await User.findOne({ id: requestOwnerId });
+    if (!requestOwner) {
+      console.error('❌ Request owner not found for response notification');
+      return;
+    }
+
+    const template = newResponseEmailTemplate(
+      requestOwner.name,
+      requestTitle,
+      responderName,
+      responseContent,
+      requestId
+    );
+
+    await transporter.sendMail({
+      from: FROM_EMAIL,
+      to: requestOwner.email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    });
+
+    console.log(`✅ New response notification sent to ${requestOwner.email}`);
+  } catch (error) {
+    console.error('❌ Error sending response notification:', error);
+  }
+};
+
+/**
+ * Send notification when request is flagged
+ */
+export const sendRequestFlaggedNotification = async (
+  requestOwnerId: string,
+  requestTitle: string,
+  reason: string,
+  requestId: string
+): Promise<void> => {
+  try {
+    const requestOwner = await User.findOne({ id: requestOwnerId });
+    if (!requestOwner) {
+      console.error('❌ Request owner not found for flagged notification');
+      return;
+    }
+
+    const template = requestFlaggedEmailTemplate(
+      requestOwner.name,
+      requestTitle,
+      reason,
+      requestId
+    );
+
+    await transporter.sendMail({
+      from: FROM_EMAIL,
+      to: requestOwner.email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    });
+
+    console.log(`✅ Request flagged notification sent to ${requestOwner.email}`);
+  } catch (error) {
+    console.error('❌ Error sending flagged notification:', error);
+  }
+};
+
+/**
+ * Send abuse report notification to all admins
+ */
+export const sendAdminAbuseReportNotification = async (
+  reporterId: string,
+  reason: string,
+  description: string,
+  targetType: string,
+  reportId: string
+): Promise<void> => {
+  try {
+    const reporter = await User.findOne({ id: reporterId });
+    if (!reporter) {
+      console.error('❌ Reporter not found for admin notification');
+      return;
+    }
+
+    const admins = await User.find({ role: 'admin' });
+    if (admins.length === 0) {
+      console.error('⚠️ No admin users found to send notifications');
+      return;
+    }
+
+    const template = adminAbuseReportEmailTemplate(
+      reporter.name,
+      reason,
+      description,
+      targetType,
+      reportId
+    );
+
+    const emailPromises = admins.map((admin) =>
+      transporter.sendMail({
+        from: FROM_EMAIL,
+        to: admin.email,
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+      })
+    );
+
+    await Promise.all(emailPromises);
+
+    console.log(`✅ Abuse report notifications sent to ${admins.length} admin(s)`);
+  } catch (error) {
+    console.error('❌ Error sending admin notifications:', error);
+  }
 };
