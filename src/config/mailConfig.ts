@@ -1,25 +1,27 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
-const smtpUser = process.env.EMAIL_USER;
-const smtpPass = process.env.EMAIL_PASSWORD;
+const {
+  EMAIL_USER,
+  EMAIL_PASSWORD,
+} = process.env;
 
-export const emailEnabled = Boolean(smtpHost && smtpPort && smtpUser && smtpPass);
-
-if (!emailEnabled) {
-  console.warn('SMTP_HOST or credentials not set — emails will be logged to console (jsonTransport).');
+if (!EMAIL_USER || !EMAIL_PASSWORD) {
+  throw new Error("EMAIL_USER or EMAIL_PASSWORD not set");
 }
 
-export const mailTransporter = emailEnabled
-  ? nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: false,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    })
-  : nodemailer.createTransport({ jsonTransport: true });
-
+export const mailTransporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, 
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASSWORD,
+  },
+  tls: {
+    rejectUnauthorized: false, 
+    minVersion: "TLSv1.2",      
+  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+});
