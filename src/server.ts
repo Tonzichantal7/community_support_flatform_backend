@@ -62,9 +62,10 @@ const startServer = async () => {
     await seedAll();
     
     // Verify email connection (non-blocking)
-    verifyEmailConnection().catch(err => {
-      console.error('Email verification failed, but server will continue:', err.message);
-    });
+    // Disabled to prevent startup issues
+    // verifyEmailConnection().catch(err => {
+    //   console.error('Email verification failed, but server will continue:', err.message);
+    // });
     
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

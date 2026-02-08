@@ -15,8 +15,9 @@ export const transporter = nodemailer.createTransport({
     rejectUnauthorized: false,
     minVersion: 'TLSv1'
   },
-  requireTLS: false
-});
+  requireTLS: false,
+  dnsTimeout: 10000
+} as any);
 
 /**
  * Verify email connection on startup
