@@ -14,23 +14,30 @@ import {
   sendProfilePictureUpdatedEmail
 } from '../services/emailService';
 
+
 export const register = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { email, password, name } = req.body;
 
-    console.log('Registering user:', { email, name });
+    console.log('📝 Registration attempt:', { email, name });
 
+    // Validation
     if (!email || !password || !name) {
       res.status(400).json({ error: 'Email, password, and name are required' });
       return;
     }
 
+    // Check existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(409).json({ error: 'An account with this email already exists. Please use a different email or try logging in.' });
+      console.log('⚠️ Email already exists:', email);
+      res.status(409).json({ 
+        error: 'An account with this email already exists. Please use a different email or try logging in.' 
+      });
       return;
     }
 
+    // Create user
     const user = await User.create({
       email,
       password,
@@ -38,15 +45,19 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
       role: UserRole.USER
     });
 
-    console.log('User created successfully:', user.id);
-    
-    // Verify the user was saved
-    const savedUser = await User.findOne({ id: user.id });
-    console.log('User verification - found in DB:', !!savedUser);
+    console.log('✅ User created successfully:', user.id);
 
-    // Send welcome email
-    await sendWelcomeEmail(email, name);
+    // Send welcome email (NON-BLOCKING!)
+    (async () => {
+      try {
+        await sendWelcomeEmail(email, name);
+        console.log('📧 Welcome email sent to:', email);
+      } catch (e) {
+        console.warn('⚠️ Failed to send welcome email:', e);
+      }
+    })();
 
+    // Prepare response
     const { password: _, ...userWithoutPassword } = user.toObject();
     
     const jwtSecret = process.env.JWT_SECRET;
@@ -54,7 +65,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
       throw new Error('JWT_SECRET is not configured');
     }
 
-    // Generate token for registration
+    // Generate token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       jwtSecret,
@@ -68,8 +79,11 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
       message: 'Registration successful'
     });
   } catch (error: any) {
-    console.error('[auth/register] Error:', error.message);
-    res.status(500).json({ error: 'Registration failed. Please try again.' });
+    console.error('❌ [auth/register] Error:', error.message);
+    res.status(500).json({ 
+      error: 'Registration failed. Please try again.',
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
+    });
   }
 };
 

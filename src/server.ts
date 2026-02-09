@@ -6,7 +6,6 @@ import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './config/db';
 import { seedAll } from './config/seedData';
 import { swaggerSpec } from './config/swagger';
-import { verifyEmailConnection } from './config/email';
 import authRoutes from './routes/authRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import requestRoutes from './routes/requestRoutes';
@@ -15,16 +14,24 @@ import abuseRoutes from './routes/abuseRoutes';
 import adminRoutes from './routes/adminRoutes';
 import abuseReportRoutes from './routes/abuseReportRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
-import { checkBanStatus } from './middleware/checkBanStatus';
-
-
-// env already loaded by import './config/env'
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Middleware
-app.use(cors());
+// CORS - MUST BE FIRST!
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'https://community-support-service-exchange.vercel.app/' // Add your production domain
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -33,7 +40,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Health check
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Community Support Platform Backend API' });
+  res.json({ 
+    message: 'Welcome to the Community Support Platform Backend API',
+    status: 'running'
+  });
 });
 
 // Routes
@@ -48,31 +58,25 @@ app.use('/api', analyticsRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error' });
+  console.error('Error:', err);
+  res.status(err.status || 500).json({ 
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
 });
 
 // Start server
 const startServer = async () => {
   try {
-    // Connect to MongoDB
     await connectDB();
-    
-    // Seed database with admin user
     await seedAll();
     
-    // Verify email connection (non-blocking)
-    // Disabled to prevent startup issues
-    // verifyEmailConnection().catch(err => {
-    //   console.error('Email verification failed, but server will continue:', err.message);
-    // });
-    
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 };
