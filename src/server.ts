@@ -21,7 +21,7 @@ import { checkBanStatus } from './middleware/checkBanStatus';
 // env already loaded by import './config/env'
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = parseInt(process.env.PORT || '8080', 10);
 
 // Middleware
 app.use(cors());
@@ -67,10 +67,14 @@ const startServer = async () => {
     //   console.error('Email verification failed, but server will continue:', err.message);
     // });
     
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
-    });
+    // app.listen(PORT, () => {
+    //   console.log(`Server is running on port ${PORT}`);
+    //   console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+    // });
+  app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+});
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
