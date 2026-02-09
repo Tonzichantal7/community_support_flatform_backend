@@ -16,7 +16,7 @@ import abuseReportRoutes from './routes/abuseReportRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = parseInt(process.env.PORT || '8080', 10);
 
 // CORS - MUST BE FIRST!
 app.use(cors({
@@ -71,10 +71,20 @@ const startServer = async () => {
     await connectDB();
     await seedAll();
     
-    app.listen(PORT, () => {
-      console.log(`✅ Server running on port ${PORT}`);
-      console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
-    });
+    // Verify email connection (non-blocking)
+    // Disabled to prevent startup issues
+    // verifyEmailConnection().catch(err => {
+    //   console.error('Email verification failed, but server will continue:', err.message);
+    // });
+    
+    // app.listen(PORT, () => {
+    //   console.log(`Server is running on port ${PORT}`);
+    //   console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+    // });
+  app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+});
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
