@@ -84,7 +84,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       // Don't block login if email fails
     }
 
-    res.status(200).json({ message: 'Login successful', token, user: { id: user.id, email: user.email, name: user.name } });
+    res.status(200).json({ message: 'Login successful', token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });

@@ -105,6 +105,23 @@ router.get('/request/:requestId/auth', authenticate, getResponsesByRequestAuth);
 
 /**
  * @swagger
+ * /api/responses/my-responses:
+ *   get:
+ *     summary: Get all responses by current user
+ *     description: Retrieve all responses posted by the authenticated user
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User responses retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/my-responses', authenticate, getResponsesByUser);
+
+/**
+ * @swagger
  * /api/responses/{id}:
  *   get:
  *     summary: Get a specific response by ID
@@ -250,23 +267,6 @@ router.patch('/:id/hide', authenticate, requireAdmin, hideResponse);
  *         description: Response not found
  */
 router.patch('/:id/show', authenticate, requireAdmin, showResponse);
-
-/**
- * @swagger
- * /api/responses/my-responses:
- *   get:
- *     summary: Get all responses by current user
- *     description: Retrieve all responses posted by the authenticated user
- *     tags: [Responses]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: User responses retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get('/my-responses', authenticate, getResponsesByUser);
 
 /**
  * @swagger
