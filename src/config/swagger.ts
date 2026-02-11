@@ -1,4 +1,7 @@
+
 import swaggerJsdoc from 'swagger-jsdoc';
+
+const PORT = process.env.PORT || '8080';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -15,12 +18,12 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:8080',
-        description: 'Development server',
+        url: `http://localhost:${PORT}`,
+        description: 'Local development server',
       },
       {
-        url: '',
-        description: 'Production server',
+        url: 'https://community-support-flatform-backend-1.onrender.com',
+        description: 'Production server (Render)',
       },
     ],
     components: {
