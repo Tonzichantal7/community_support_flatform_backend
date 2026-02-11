@@ -46,13 +46,16 @@ export const getPendingRequests = async (req: AuthRequest, res: Response): Promi
       .sort({ createdAt: -1 })
       .lean();
 
-    // Enrich with category names
+    // Enrich with category and user names
     const enrichedRequests = await Promise.all(
       pendingRequests.map(async (request) => {
         const category = await Category.findOne({ id: request.categoryId }).select('name').lean();
+        const user = await User.findOne({ id: request.userId } as Record<string, any>).select('name').lean();
+        console.log('Request userId:', request.userId, 'Found user:', user);
         return {
           ...request,
           categoryName: category?.name || 'Unknown Category',
+          authorName: user?.name || 'Unknown',
         };
       })
     );
