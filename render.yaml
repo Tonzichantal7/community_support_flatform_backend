@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: community-service-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: MONGO_URL
+        fromDatabase:
+          name: community-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: EMAIL_USER
+        sync: false  # Set manually in dashboard
+      - key: EMAIL_PASSWORD
+        sync: false  # Set manually in dashboard
+      - key: ADMIN_EMAIL
+        value: chantal@gmail.com
+      - key: ADMIN_PASSWORD
+        sync: false  # Set manually in dashboard
+      - key: FRONTEND_URL
+        value: http://localhost:3000  # Update after deploying frontend
+
+databases:
+  - name: community-db
+    plan: free
+    databaseName: community_service
