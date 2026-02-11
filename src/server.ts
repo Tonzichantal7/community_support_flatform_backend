@@ -24,7 +24,7 @@ app.use(cors({
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:3000',
-    'https://community-support-service-exchange.vercel.app/' // Add your production domain
+    'https://community-support-service-exchange.vercel.app' 
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -71,16 +71,7 @@ const startServer = async () => {
     await connectDB();
     await seedAll();
     
-    // Verify email connection (non-blocking)
-    // Disabled to prevent startup issues
-    // verifyEmailConnection().catch(err => {
-    //   console.error('Email verification failed, but server will continue:', err.message);
-    // });
-    
-    // app.listen(PORT, () => {
-    //   console.log(`Server is running on port ${PORT}`);
-    //   console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
-    // });
+
   app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
