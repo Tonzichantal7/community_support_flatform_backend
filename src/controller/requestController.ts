@@ -265,11 +265,13 @@ export const getAllRequests = async (req: AuthRequest, res: Response): Promise<v
 };
 
 /**
- * Get a single request by ID
+ * Get a single request by ID with all its responses
  */
 export const getRequestById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
 
     // Validate id is a string
     if (typeof id !== 'string') {
@@ -284,9 +286,39 @@ export const getRequestById = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    // Import Response model dynamically to avoid circular dependency
+    const ResponseModel = (await import('../models/Response')).default;
+
+    // Get all responses for this request
+    const allResponses = await ResponseModel.find({ 
+      requestId: id, 
+      isActive: true 
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+    // Filter responses based on visibility rules
+    const responses = allResponses.filter((response: any) => {
+      // If response is visible, everyone can see it
+      if (response.status === 'VISIBLE') return true;
+      
+      // If hidden, only response owner, request owner, or admin can see
+      if (response.status === 'HIDDEN') {
+        return (
+          response.userId === userId ||  // Response owner
+          request.userId === userId ||   // Request owner
+          userRole === 'admin'           // Admin
+        );
+      }
+      
+      return false;
+    });
+
     res.status(200).json({
       message: 'Request retrieved successfully',
       request,
+      responses,
+      responseCount: responses.length,
     });
   } catch (error) {
     console.error('Get request error:', error);
