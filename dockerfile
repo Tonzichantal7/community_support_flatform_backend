@@ -37,25 +37,3 @@ ENV NODE_ENV=production
 
 # Start the application
 CMD ["node", "dist/server.js"]
-```
-
-## 2. Create `.dockerignore`
-```
-node_modules
-npm-debug.log
-.git
-.gitignore
-README.md
-.env
-.env.local
-.env.development
-dist
-build
-*.log
-.DS_Store
-coverage
-.vscode
-.idea
-src
-tsconfig.json
-nodemon.json
