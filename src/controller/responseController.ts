@@ -7,6 +7,7 @@ import {
   sendResponsePostedEmail,
   sendResponseLikedEmail,
   sendRequestLikedEmail,
+  sendNewResponseNotification,
 } from '../services/emailService';
 
 // Create a new response to a request
@@ -41,15 +42,16 @@ export const createResponse = async (req: AuthRequest, res: Response) => {
 
     await newResponse.save();
 
-    // Send email notification to request owner
-    try {
-      const responder = await User.findOne({ id: userId } as Record<string, any>).select('name').lean();
-      const requestOwner = await User.findOne({ id: request.userId } as Record<string, any>).select('email name').lean();
-      if (requestOwner?.email) {
-        await sendResponsePostedEmail(requestOwner.email, requestOwner.name || 'User', request.title, responder?.name || 'Someone');
-      }
-    } catch (emailError) {
-      console.error('Error sending response notification email:', emailError);
+    // Send email notification to request owner (non-blocking)
+    const responder = await User.findOne({ id: userId } as Record<string, any>).select('name').lean();
+    if (responder) {
+      sendNewResponseNotification(
+        request.userId,
+        request.title,
+        responder.name || 'Someone',
+        content,
+        request.id
+      ).catch(err => console.error('Response notification failed:', err));
     }
 
     res.status(201).json({

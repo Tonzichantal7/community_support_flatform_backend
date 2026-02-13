@@ -6,11 +6,16 @@ import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './config/db';
 import { seedAll } from './config/seedData';
 import { swaggerSpec } from './config/swagger';
+import { verifyEmailConnection } from './config/email';
 import authRoutes from './routes/authRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import requestRoutes from './routes/requestRoutes';
 import responseRoutes from './routes/responseRoutes';
 import abuseRoutes from './routes/abuseRoutes';
+import adminRoutes from './routes/adminRoutes';
+import abuseReportRoutes from './routes/abuseReportRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
+import { checkBanStatus } from './middleware/checkBanStatus';
 
 
 // env already loaded by import './config/env'
@@ -37,6 +42,9 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/responses', responseRoutes);
 app.use('/api/abuse', abuseRoutes);
+app.use('/api', adminRoutes);
+app.use('/api', abuseReportRoutes);
+app.use('/api', analyticsRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -52,6 +60,11 @@ const startServer = async () => {
     
     // Seed database with admin user
     await seedAll();
+    
+    // Verify email connection (non-blocking)
+    verifyEmailConnection().catch(err => {
+      console.error('Email verification failed, but server will continue:', err.message);
+    });
     
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

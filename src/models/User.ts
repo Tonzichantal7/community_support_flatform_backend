@@ -13,6 +13,13 @@ export interface IUser extends Document {
   resetToken?: string | undefined;
   resetTokenExpiry?: Date | undefined;
   createdAt: Date;
+  isBanned: boolean;
+  banType: 'temporary' | 'permanent' | null;
+  banReason?: string;
+  bannedAt?: Date;
+  bannedBy?: string;
+  banExpiresAt?: Date;
+  banCount: number;
 }
 
 const userSchema = new Schema({
@@ -24,7 +31,14 @@ const userSchema = new Schema({
   profilePicture: String,
   resetToken: String,
   resetTokenExpiry: Date,
-  createdAt: { type: Date, default: Date.now, index: true }
+  createdAt: { type: Date, default: Date.now, index: true },
+  isBanned: { type: Boolean, default: false, index: true },
+  banType: { type: String, enum: ['temporary', 'permanent', null], default: null },
+  banReason: String,
+  bannedAt: Date,
+  bannedBy: { type: String, ref: 'User' },
+  banExpiresAt: Date,
+  banCount: { type: Number, default: 0 }
 });
 
 userSchema.index({ name: 'text', email: 'text' });

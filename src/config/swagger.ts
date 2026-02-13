@@ -50,14 +50,14 @@ const options: swaggerJsdoc.Options = {
             description: { type: 'string' },
           },
         },
-        
+
         Error: {
           type: 'object',
           properties: {
             error: { type: 'string' },
           },
         },
-        
+
         ModerationAction: {
           type: 'object',
           properties: {

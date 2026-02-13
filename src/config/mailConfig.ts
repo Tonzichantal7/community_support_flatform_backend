@@ -19,8 +19,9 @@ export const mailTransporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: false, 
-    minVersion: "TLSv1.2",      
+    minVersion: "TLSv1",      
   },
+  requireTLS: false,
   connectionTimeout: 10000,
   greetingTimeout: 10000,
   socketTimeout: 10000,
