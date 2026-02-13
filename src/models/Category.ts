@@ -6,7 +6,7 @@ export interface ICategory extends Document {
   name: string;
   description?: string | undefined;
   isActive: boolean;
-  createdBy: string; // admin user ID
+  createdBy: string; 
   createdAt: Date;
   updatedAt: Date;
 }

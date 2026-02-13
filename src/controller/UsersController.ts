@@ -271,7 +271,6 @@ export const uploadProfilePicture = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    // Delete old profile picture if exists
     if (user.profilePicture) {
       const oldPath = path.join(__dirname, '../../uploads', user.profilePicture);
       if (fs.existsSync(oldPath)) {
@@ -282,7 +281,6 @@ export const uploadProfilePicture = async (req: AuthRequest, res: Response): Pro
     user.profilePicture = req.file.filename;
     await user.save();
 
-    // Non-blocking profile picture update email
     (async () => {
       try {
         await sendProfilePictureUpdatedEmail(user.email);
