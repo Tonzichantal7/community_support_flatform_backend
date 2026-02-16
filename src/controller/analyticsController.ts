@@ -156,10 +156,7 @@ export const getRequestResolutionRates = async (req: AuthRequest, res: Response)
   }
 };
 
-/**
- * Get overall system usage statistics
- * GET /api/admin/analytics/system-usage
- */
+
 export const getSystemUsageStatistics = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const totalUsers = await User.countDocuments();
@@ -288,13 +285,37 @@ export const exportAnalyticsToCSV = async (req: AuthRequest, res: Response): Pro
 
     switch (type) {
       case 'requests':
-        data = await ServiceRequest.find({ isActive: true }).lean();
+         data = await ServiceRequest.find({ isActive: true })
+          .populate('userId', 'name email')
+          .populate('categoryId', 'name')
+          .lean();
+
+             // Transform data to include names instead of IDs
+        data = data.map(item => ({
+          ...item,
+          userName: item.userId?.name || 'Unknown',
+          userEmail: item.userId?.email || 'Unknown',
+          categoryName: item.categoryId?.name || 'Unknown',
+          userId: undefined, // Remove userId
+          categoryId: undefined // Remove categoryId
+        }));
+
         break;
       case 'users':
         data = await User.find().lean();
         break;
       case 'responses':
-        data = await ServiceResponse.find({ isActive: true }).lean();
+                 data = await ServiceResponse.find({ isActive: true })
+          .populate('userId', 'name email')
+          .lean();
+        
+        data = data.map(item => ({
+          ...item,
+          userName: item.userId?.name || 'Unknown',
+          userEmail: item.userId?.email || 'Unknown',
+          userId: undefined
+        }));
+
         break;
       case 'reports':
         data = await AbuseReport.find({ isActive: true }).lean();
