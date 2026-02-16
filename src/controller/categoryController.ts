@@ -7,8 +7,22 @@ import Category from '../models/Category';
  */
 export const getCategories = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const categories = await Category.find({ isActive: true }).select('-createdBy');
-    res.status(200).json({ categories });
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Category.countDocuments({ isActive: true });
+    const categories = await Category.find({ isActive: true }).select('-createdBy').skip(skip).limit(limit);
+    
+    res.status(200).json({ 
+      categories,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Get categories error:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });

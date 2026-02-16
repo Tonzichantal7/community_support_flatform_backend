@@ -12,6 +12,7 @@ import {
   viewResponse,
   likeResponse,
   unlikeResponse,
+  getResponseLikedBy,
 } from '../controller/responseController';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/adminAuth';
@@ -362,5 +363,25 @@ router.post('/like', authenticate, likeResponse);
  *         description: Response not found
  */
 router.post('/unlike', authenticate, unlikeResponse);
+
+/**
+ * @swagger
+ * /api/responses/{id}/liked-by:
+ *   get:
+ *     summary: Get users who liked a response
+ *     tags: [Responses]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Users retrieved successfully
+ *       404:
+ *         description: Response not found
+ */
+router.get('/:id/liked-by', getResponseLikedBy);
 
 export default router;

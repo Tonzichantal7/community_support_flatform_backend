@@ -1,10 +1,68 @@
 import express from 'express';
-import { banUser, unbanUser } from '../controller/adminController';
+import { banUser, unbanUser, getAllUsers, updateUserRole, getUserById } from '../controller/adminController';
 import { getModerationHistory, getTargetHistory, getModeratorActivity } from '../controller/moderationHistoryController';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/adminAuth';
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     summary: Get all users (Admin only)
+ *     tags: [Admin - User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Users retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.get('/users', authenticate, requireAdmin, getAllUsers);
+
+router.get('/users/:userId', authenticate, getUserById);
+
+/**
+ * @swagger
+ * /api/admin/users/{userId}/role:
+ *   put:
+ *     summary: Update user role (Admin only)
+ *     tags: [Admin - User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - role
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [user, helper, admin]
+ *           example:
+ *             role: admin
+ *     responses:
+ *       200:
+ *         description: User role updated successfully
+ *       400:
+ *         description: Invalid role
+ *       404:
+ *         description: User not found
+ */
+router.put('/users/:userId/role', authenticate, requireAdmin, updateUserRole);
 
 /**
  * @swagger

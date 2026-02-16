@@ -114,6 +114,10 @@ export const getRequestResolutionRates = async (req: AuthRequest, res: Response)
     const rejectedRequests = await ServiceRequest.countDocuments({ status: 'REJECTED', isActive: true });
     const pendingRequests = await ServiceRequest.countDocuments({ status: 'PENDING', isActive: true });
 
+    const totalResponses = await ServiceResponse.countDocuments({ isActive: true });
+    const visibleResponses = await ServiceResponse.countDocuments({ status: 'VISIBLE', isActive: true });
+    const hiddenResponses = await ServiceResponse.countDocuments({ status: 'HIDDEN', isActive: true });
+
     const resolutionRate = calculatePercentage(approvedRequests + rejectedRequests, totalRequests);
 
     const resolvedRequests = await ServiceRequest.find({
@@ -140,6 +144,9 @@ export const getRequestResolutionRates = async (req: AuthRequest, res: Response)
       approvedRequests,
       rejectedRequests,
       pendingRequests,
+      totalResponses,
+      visibleResponses,
+      hiddenResponses,
       resolutionRate,
       averageResolutionTime
     });
@@ -170,6 +177,8 @@ export const getSystemUsageStatistics = async (req: AuthRequest, res: Response):
 
     const totalRequests = await ServiceRequest.countDocuments({ isActive: true });
     const totalResponses = await ServiceResponse.countDocuments({ isActive: true });
+    const visibleResponses = await ServiceResponse.countDocuments({ status: 'VISIBLE', isActive: true });
+    const hiddenResponses = await ServiceResponse.countDocuments({ status: 'HIDDEN', isActive: true });
     const totalAbuseReports = await AbuseReport.countDocuments({ isActive: true });
 
     res.status(200).json({
@@ -181,7 +190,7 @@ export const getSystemUsageStatistics = async (req: AuthRequest, res: Response):
         newThisMonth
       },
       requests: { total: totalRequests },
-      responses: { total: totalResponses },
+      responses: { total: totalResponses, visible: visibleResponses, hidden: hiddenResponses },
       abuseReports: { total: totalAbuseReports }
     });
   } catch (error) {
@@ -424,13 +433,37 @@ export const getComprehensiveDashboard = async (req: AuthRequest, res: Response)
     const totalRequests = await ServiceRequest.countDocuments({ isActive: true });
     const approvedRequests = await ServiceRequest.countDocuments({ status: 'APPROVED', isActive: true });
     const rejectedRequests = await ServiceRequest.countDocuments({ status: 'REJECTED', isActive: true });
+    const pendingRequests = await ServiceRequest.countDocuments({ status: 'PENDING', isActive: true });
     const resolutionRate = calculatePercentage(approvedRequests + rejectedRequests, totalRequests);
 
+    const totalResponses = await ServiceResponse.countDocuments({ isActive: true });
+    const visibleResponses = await ServiceResponse.countDocuments({ status: 'VISIBLE', isActive: true });
+    const hiddenResponses = await ServiceResponse.countDocuments({ status: 'HIDDEN', isActive: true });
+
     const totalUsers = await User.countDocuments();
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const newThisMonth = await User.countDocuments({ createdAt: { $gte: startOfMonth } });
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const activeRequestUsers = await ServiceRequest.distinct('userId', { createdAt: { $gte: thirtyDaysAgo }, isActive: true });
     const activeResponseUsers = await ServiceResponse.distinct('userId', { createdAt: { $gte: thirtyDaysAgo }, isActive: true });
     const activeUsersSet = new Set([...activeRequestUsers, ...activeResponseUsers]);
+
+    const resolvedRequests = await ServiceRequest.find({
+      status: { $in: ['APPROVED', 'REJECTED'] },
+      isActive: true,
+      approvedAt: { $exists: true }
+    }).lean();
+
+    let totalResolutionTime = 0;
+    let resolvedCount = 0;
+    resolvedRequests.forEach(request => {
+      if (request.approvedAt && request.createdAt) {
+        totalResolutionTime += new Date(request.approvedAt).getTime() - new Date(request.createdAt).getTime();
+        resolvedCount++;
+      }
+    });
+    const avgResolutionTime = resolvedCount > 0 ? totalResolutionTime / resolvedCount : 0;
+    const averageResolutionTime = formatDuration(avgResolutionTime);
 
     res.status(200).json({
       requestsByCategory,
@@ -439,11 +472,14 @@ export const getComprehensiveDashboard = async (req: AuthRequest, res: Response)
         totalRequests,
         approvedRequests,
         rejectedRequests,
-        resolutionRate
+        pendingRequests,
+        resolutionRate,
+        averageResolutionTime
       },
       systemUsage: {
-        users: { total: totalUsers, activeUsers: activeUsersSet.size },
-        requests: { total: totalRequests }
+        users: { total: totalUsers, activeUsers: activeUsersSet.size, newThisMonth },
+        requests: { total: totalRequests },
+        responses: { total: totalResponses, visible: visibleResponses, hidden: hiddenResponses }
       }
     });
   } catch (error) {

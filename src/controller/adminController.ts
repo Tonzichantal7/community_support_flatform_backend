@@ -3,6 +3,65 @@ import User from '../models/User';
 import ModerationHistory from '../models/ModerationHistory';
 import { AuthRequest } from '../types';
 
+export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await User.countDocuments({});
+    const users = await User.find({}).select('id name email role isBanned createdAt profilePicture isOnline lastSeen').sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+    
+    res.status(200).json({ 
+      users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+};
+
+export const updateUserRole = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.userId as string;
+    const { role } = req.body;
+    const adminId = req.user?.id;
+
+    if (!adminId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (!role || !['user', 'helper', 'admin'].includes(role)) {
+      res.status(400).json({ error: 'Invalid role. Must be user, helper, or admin' });
+      return;
+    }
+
+    const user = await User.findOne({ $or: [{ id: userId }, { _id: userId }] });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      message: 'User role updated successfully',
+      data: { userId: user.id, role: user.role }
+    });
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    res.status(500).json({ error: 'Failed to update user role' });
+  }
+};
+
 export const banUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.params.userId as string;
@@ -24,7 +83,7 @@ export const banUser = async (req: AuthRequest, res: Response): Promise<void> =>
       return;
     }
 
-    const user = await User.findOne({ id: userId });
+    const user = await User.findOne({ $or: [{ id: userId }, { _id: userId }] });
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
@@ -97,7 +156,7 @@ export const unbanUser = async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
-    const user = await User.findOne({ id: userId });
+    const user = await User.findOne({ $or: [{ id: userId }, { _id: userId }] });
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
@@ -129,5 +188,34 @@ export const unbanUser = async (req: AuthRequest, res: Response): Promise<void> 
   } catch (error) {
     console.error('Error unbanning user:', error);
     res.status(500).json({ error: 'Failed to unban user' });
+  }
+};
+
+export const getUserById = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.userId as string;
+    console.log('Fetching user by ID:', userId);
+
+    const user = await User.findOne({ id: userId }).select('id name email role').lean();
+    console.log('User found:', user);
+    
+    if (!user) {
+      console.log('User not found for ID:', userId);
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({
+      message: 'User retrieved successfully',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
   }
 };

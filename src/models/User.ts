@@ -20,6 +20,8 @@ export interface IUser extends Document {
   bannedBy?: string;
   banExpiresAt?: Date;
   banCount: number;
+  isOnline?: boolean;
+  lastSeen?: Date;
 }
 
 const userSchema = new Schema({
@@ -38,7 +40,9 @@ const userSchema = new Schema({
   bannedAt: Date,
   bannedBy: { type: String, ref: 'User' },
   banExpiresAt: Date,
-  banCount: { type: Number, default: 0 }
+  banCount: { type: Number, default: 0 },
+  isOnline: { type: Boolean, default: false },
+  lastSeen: { type: Date, default: Date.now }
 });
 
 userSchema.index({ name: 'text', email: 'text' });

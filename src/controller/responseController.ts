@@ -437,3 +437,38 @@ export const unlikeResponse = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to remove like' });
   }
 };
+
+
+/**
+ * Get users who liked a response
+ */
+export const getResponseLikedBy = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (typeof id !== 'string') {
+      return res.status(400).json({ error: 'Invalid response ID' });
+    }
+
+    const response = await ResponseModel.findOne({ id, isActive: true } as Record<string, any>).lean();
+    if (!response) {
+      return res.status(404).json({ error: 'Response not found' });
+    }
+
+    const users = await Promise.all(
+      response.likedBy.map(async (userId: string) => {
+        const user = await User.findOne({ id: userId } as Record<string, any>).select('id name').lean();
+        return user ? { id: user.id, name: user.name } : null;
+      })
+    );
+
+    res.status(200).json({
+      message: 'Users retrieved successfully',
+      users: users.filter(u => u !== null),
+      count: users.filter(u => u !== null).length,
+    });
+  } catch (error) {
+    console.error('Get response liked by error:', error);
+    res.status(500).json({ error: 'Failed to retrieve users' });
+  }
+};

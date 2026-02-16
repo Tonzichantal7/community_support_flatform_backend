@@ -8,6 +8,7 @@ import {
   changePassword,
   logout,
   uploadProfilePicture,
+  updateProfile,
 } from '../controller/authController';
 import { authenticate } from '../middleware/auth';
 import upload from '../middleware/uploads';
@@ -155,6 +156,13 @@ router.post(
   authenticate,
   upload.single('file'),
   uploadProfilePicture
+);
+
+router.put(
+  '/profile',
+  authenticate,
+  upload.single('profileImage'),
+  updateProfile
 );
 
 /**

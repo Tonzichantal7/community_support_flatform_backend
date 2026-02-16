@@ -41,7 +41,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
     );
 
-    res.status(201).json({ message: 'User registered successfully', token, user: { id: user.id, email: user.email, name: user.name } });
+    res.status(201).json({ message: 'User registered successfully', token, user: { id: user.id, email: user.email, name: user.name, role: user.role, profilePicture: user.profilePicture } });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Registration failed' });
@@ -84,7 +84,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       // Don't block login if email fails
     }
 
-    res.status(200).json({ message: 'Login successful', token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    res.status(200).json({ message: 'Login successful', token, user: { id: user.id, email: user.email, name: user.name, role: user.role, profilePicture: user.profilePicture } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -233,6 +233,61 @@ export const uploadProfilePicture = async (req: AuthRequest, res: Response): Pro
   } catch (error) {
     console.error('Upload profile picture error:', error);
     res.status(500).json({ error: 'Failed to upload profile picture' });
+  }
+};
+
+export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    console.log('File received:', req.file);
+
+    const user = await User.findOne({ id: req.user.id });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const { name, email, currentPassword, newPassword } = req.body;
+
+    if (name) user.name = name;
+
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(409).json({ error: 'Email already in use' });
+        return;
+      }
+      user.email = email;
+    }
+
+    if (currentPassword && newPassword) {
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        res.status(401).json({ error: 'Current password is incorrect' });
+        return;
+      }
+      user.password = newPassword;
+    }
+
+    if (req.file) {
+      user.profilePicture = `uploads/${req.file.filename}`;
+      console.log('ProfilePicture set:', user.profilePicture);
+    }
+
+    await user.save();
+    console.log('Saved profilePicture:', user.profilePicture);
+
+    res.status(200).json({ 
+      message: 'Profile updated successfully',
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, profilePicture: user.profilePicture }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 };
 

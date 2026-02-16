@@ -298,6 +298,66 @@ export const uploadProfilePicture = async (req: AuthRequest, res: Response): Pro
   }
 };
 
+export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findOne({ id: req.user!.id });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const { name, email, currentPassword, newPassword } = req.body;
+
+    // Update name if provided
+    if (name) {
+      user.name = name;
+    }
+
+    // Update email if provided and different
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(409).json({ error: 'Email already in use' });
+        return;
+      }
+      user.email = email;
+    }
+
+    // Update password if provided
+    if (currentPassword && newPassword) {
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        res.status(401).json({ error: 'Current password is incorrect' });
+        return;
+      }
+      user.password = newPassword;
+    }
+
+    // Handle profile picture upload
+    if (req.file) {
+      // Delete old profile picture if exists
+      if (user.profilePicture) {
+        const oldPath = path.join(__dirname, '../../uploads', user.profilePicture);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+      user.profilePicture = req.file.filename;
+    }
+
+    await user.save();
+
+    const { password: _, ...userWithoutPassword } = user.toObject();
+    res.status(200).json({ 
+      message: 'Profile updated successfully',
+      user: userWithoutPassword 
+    });
+  } catch (error) {
+    console.error('[updateProfile] Error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
 export const logout = (req: AuthRequest, res: Response): void => {
   res.status(200).json({ message: 'Logout successful' });
 };

@@ -16,6 +16,7 @@ import {
   viewRequest,
   likeRequest,
   unlikeRequest,
+  getRequestLikedBy,
 } from '../controller/requestController';
 import { authenticate } from '../middleware/auth';
 import { requireAdmin } from '../middleware/adminAuth';
@@ -548,5 +549,25 @@ router.post('/like', authenticate, likeRequest);
  *         description: Request not found
  */
 router.post('/unlike', authenticate, unlikeRequest);
+
+/**
+ * @swagger
+ * /api/requests/{id}/liked-by:
+ *   get:
+ *     summary: Get users who liked a request
+ *     tags: [Requests]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Users retrieved successfully
+ *       404:
+ *         description: Request not found
+ */
+router.get('/:id/liked-by', getRequestLikedBy);
 
 export default router;

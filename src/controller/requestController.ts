@@ -238,28 +238,48 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
 export const getAllRequests = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { type } = req.query;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
 
-    // Validate type is provided
     if (!type || typeof type !== 'string' || !['REQUEST', 'OFFER'].includes(type)) {
       res.status(400).json({ error: 'Type parameter is required and must be either REQUEST or OFFER' });
       return;
     }
 
-    // Build filter object - only filter by type and isActive
     const filter: Record<string, any> = { 
       isActive: true,
       type: type
     };
 
-    // Get all requests matching the type
+    const total = await Request.countDocuments(filter);
     const requests = await Request.find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
+    const enrichedRequests = await Promise.all(
+      requests.map(async (request) => {
+        const category = await Category.findOne({ id: request.categoryId }).select('name').lean();
+        const user = await User.findOne({ id: request.userId } as Record<string, any>).select('name').lean();
+        return {
+          ...request,
+          author: { name: user?.name || 'Unknown' },
+          category: { name: category?.name || 'N/A' },
+        };
+      })
+    );
 
     res.status(200).json({
       message: 'Requests retrieved successfully',
-      requests,
-      count: requests.length,
+      requests: enrichedRequests,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('Get requests error:', error);
@@ -880,5 +900,41 @@ export const unlikeRequest = async (req: AuthRequest, res: Response): Promise<vo
   } catch (error) {
     console.error('Unlike request error:', error);
     res.status(500).json({ error: 'Failed to remove like' });
+  }
+};
+
+/**
+ * Get users who liked a request
+ */
+export const getRequestLikedBy = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (typeof id !== 'string') {
+      res.status(400).json({ error: 'Invalid request ID' });
+      return;
+    }
+
+    const request = await Request.findOne({ id, isActive: true }).lean();
+    if (!request) {
+      res.status(404).json({ error: 'Request not found' });
+      return;
+    }
+
+    const users = await Promise.all(
+      request.likedBy.map(async (userId) => {
+        const user = await User.findOne({ id: userId } as Record<string, any>).select('id name').lean();
+        return user ? { id: user.id, name: user.name } : null;
+      })
+    );
+
+    res.status(200).json({
+      message: 'Users retrieved successfully',
+      users: users.filter(u => u !== null),
+      count: users.filter(u => u !== null).length,
+    });
+  } catch (error) {
+    console.error('Get request liked by error:', error);
+    res.status(500).json({ error: 'Failed to retrieve users' });
   }
 };
