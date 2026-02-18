@@ -22,7 +22,7 @@ const options: swaggerJsdoc.Options = {
         description: 'Local development server',
       },
       {
-        url: 'https://community-support-flatform-backend-1.onrender.com',
+        url: 'https://community-support-flatform-backend-1-0ghf.onrender.com/',
         description: 'Production server (Render)',
       },
     ],
