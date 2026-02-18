@@ -5,11 +5,19 @@ import { AuthRequest } from '../types';
 
 export const sendMessage = async (req: AuthRequest, res: Response) => {
   try {
-    const { receiverId, content } = req.body;
+    const { receiverId, content, messageType = 'text' } = req.body;
     const senderId = req.user?.id;
 
-    if (!senderId || !receiverId || !content) {
+    if (!senderId || !receiverId) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (messageType === 'text' && !content) {
+      return res.status(400).json({ error: 'Content is required for text messages' });
+    }
+
+    if (messageType === 'image' && !req.file) {
+      return res.status(400).json({ error: 'Image file is required for image messages' });
     }
 
     const receiver = await User.findOne({ id: receiverId } as Record<string, any>);
@@ -19,13 +27,21 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 
     const conversationId = [senderId, receiverId].sort().join('_');
 
-    const message = new Message({
+    const messageData: any = {
       conversationId,
       senderId,
       receiverId,
-      content,
-    });
+      messageType,
+    };
 
+    if (messageType === 'text') {
+      messageData.content = content;
+    } else if (messageType === 'image' && req.file) {
+      messageData.imageUrl = `uploads/${req.file.filename}`;
+      messageData.content = 'Image';
+    }
+
+    const message = new Message(messageData);
     await message.save();
 
     res.status(201).json({ message: 'Message sent', data: message });

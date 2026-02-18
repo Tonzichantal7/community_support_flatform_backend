@@ -7,6 +7,8 @@ export interface IMessage extends Document {
   senderId: string;
   receiverId: string;
   content: string;
+  messageType?: 'text' | 'image';
+  imageUrl?: string;
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -37,7 +39,16 @@ const MessageSchema: Schema = new Schema(
     },
     content: {
       type: String,
-      required: true,
+      required: false,
+    },
+    messageType: {
+      type: String,
+      enum: ['text', 'image'],
+      default: 'text',
+    },
+    imageUrl: {
+      type: String,
+      required: false,
     },
     isRead: {
       type: Boolean,

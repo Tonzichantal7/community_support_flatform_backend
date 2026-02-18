@@ -100,15 +100,24 @@ io.on('connection', (socket) => {
     console.log(`User ${userId} registered with socket ${socket.id}`);
   });
 
-  socket.on('sendMessage', async (data: { receiverId: string; senderId: string; content: string }) => {
+  socket.on('sendMessage', async (data: { receiverId: string; senderId: string; content: string; messageType?: string; imageUrl?: string }) => {
     try {
       const conversationId = [data.senderId, data.receiverId].sort().join('_');
-      const message = new Message({
+      const messageData: any = {
         conversationId,
         senderId: data.senderId,
         receiverId: data.receiverId,
-        content: data.content,
-      });
+        messageType: data.messageType || 'text',
+      };
+
+      if (data.messageType === 'image') {
+        messageData.imageUrl = data.imageUrl;
+        messageData.content = 'Image';
+      } else {
+        messageData.content = data.content;
+      }
+
+      const message = new Message(messageData);
       await message.save();
 
       const receiverSockets = userSockets.get(data.receiverId);
